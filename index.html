@@ -1,0 +1,787 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dice and Die</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+    :root {
+      --bg: #0f0c29;
+      --bg2: #302b63;
+      --accent: #ff6b6b;
+      --accent2: #4ecdc4;
+      --gold: #ffd93d;
+      --text: #ffffff;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, var(--bg), var(--bg2), #24243e);
+      min-height: 100vh;
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px 20px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.9rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--gold), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-bottom: 22px;
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Player count ===== */
+    .player-count {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .count-btn {
+      flex: 1;
+      padding: 16px 8px;
+      border: 2px solid var(--card-border);
+      background: transparent;
+      color: white;
+      border-radius: 14px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .count-btn:hover, .count-btn.selected {
+      border-color: var(--accent2);
+      background: rgba(78, 205, 196, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(78, 205, 196, 0.25);
+    }
+
+    /* ===== Name inputs ===== */
+    .name-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      margin-bottom: 22px;
+    }
+
+    .name-field {
+      position: relative;
+    }
+
+    .name-field input {
+      width: 100%;
+      padding: 13px 14px 13px 46px;
+      border: 2px solid var(--card-border);
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+      color: white;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .name-field input:focus {
+      border-color: var(--accent2);
+    }
+    .name-field input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .player-avatar {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #ee5a5a);
+      color: white;
+      box-shadow: 0 8px 22px rgba(255, 107, 107, 0.35);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(255, 107, 107, 0.45);
+    }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid var(--card-border);
+      margin-top: 10px;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* ===== Game screen ===== */
+    .current-spinner {
+      text-align: center;
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+      opacity: 0.9;
+    }
+    .current-spinner strong {
+      color: var(--gold);
+      font-size: 1.15rem;
+    }
+
+    .players-bar {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .player-chip {
+      padding: 7px 13px;
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    .player-chip.active {
+      border-color: var(--gold);
+      background: rgba(255, 217, 61, 0.2);
+      box-shadow: 0 0 14px rgba(255, 217, 61, 0.3);
+      transform: scale(1.06);
+    }
+
+    /* ===== Spinner / Wheel ===== */
+    .spinner-area {
+      text-align: center;
+      margin: 10px 0 22px;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 270px;
+      height: 270px;
+      margin: 0 auto 18px;
+    }
+
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      transition: transform 4.2s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+      box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1), 0 0 28px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 13px solid transparent;
+      border-right: 13px solid transparent;
+      border-top: 26px solid var(--gold);
+      z-index: 20;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    /* Double-ended needle visual (decorative center) */
+    .needle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 70%;
+      background: linear-gradient(to bottom, #ff6b6b 0%, #ff6b6b 45%, #fff 45%, #fff 55%, #4ecdc4 55%, #4ecdc4 100%);
+      transform: translate(-50%, -50%);
+      border-radius: 4px;
+      z-index: 15;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(0,0,0,0.4);
+      display: none; /* we use the top pointer + labels instead */
+    }
+
+    .spin-btn {
+      background: linear-gradient(135deg, var(--gold), #f0c020);
+      color: #1a1a2e;
+      font-size: 1.25rem;
+      padding: 15px 42px;
+      border-radius: 50px;
+      box-shadow: 0 8px 24px rgba(255, 217, 61, 0.4);
+      border: none;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.25s;
+    }
+    .spin-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+    }
+    .spin-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ===== Result area ===== */
+    .result-area {
+      display: none;
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+    .result-area.show {
+      display: block;
+    }
+
+    .result-header {
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+      opacity: 0.85;
+    }
+
+    .result-main {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+      line-height: 1.35;
+    }
+
+    .result-type {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .result-type.truth {
+      background: rgba(78, 205, 196, 0.25);
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+    }
+    .result-type.dare {
+      background: rgba(255, 107, 107, 0.25);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .prompt-card {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px 16px;
+      margin-bottom: 18px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .prompt-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+
+    .instruction {
+      font-size: 0.82rem;
+      opacity: 0.7;
+      margin-bottom: 14px;
+    }
+
+    /* Colors */
+    .c0 { background: #ff6b6b; }
+    .c1 { background: #4ecdc4; }
+    .c2 { background: #ffd93d; color: #1a1a2e; }
+    .c3 { background: #a78bfa; }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.72rem;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dice and Die</h1>
+    <p class="subtitle">Truth or Dare Spinner</p>
+
+    <!-- SCREEN 1: Choose players -->
+    <div id="screen-count" class="screen active">
+      <p style="text-align:center; margin-bottom:14px; opacity:0.8;">How many players?</p>
+      <div class="player-count">
+        <button class="count-btn" data-count="2">2</button>
+        <button class="count-btn" data-count="3">3</button>
+        <button class="count-btn" data-count="4">4</button>
+      </div>
+      <button class="btn btn-primary" id="btn-to-names" disabled>Continue</button>
+    </div>
+
+    <!-- SCREEN 2: Enter names -->
+    <div id="screen-names" class="screen">
+      <p style="text-align:center; margin-bottom:14px; opacity:0.8;">Enter player names</p>
+      <div class="name-inputs" id="name-inputs"></div>
+      <button class="btn btn-primary" id="btn-start">Start Game</button>
+      <button class="btn btn-secondary" id="btn-back">Back</button>
+    </div>
+
+    <!-- SCREEN 3: Game -->
+    <div id="screen-game" class="screen">
+      <div class="current-spinner" id="current-spinner-label">
+        <span id="spinner-name">—</span> is spinning
+      </div>
+
+      <div class="players-bar" id="players-bar"></div>
+
+      <div class="spinner-area" id="spinner-area">
+        <div class="wheel-container">
+          <div class="wheel-pointer"></div>
+          <div class="wheel" id="wheel"></div>
+        </div>
+        <button class="spin-btn" id="spin-btn">SPIN</button>
+      </div>
+
+      <div class="result-area" id="result-area">
+        <div class="result-header">The needle landed on</div>
+        <div class="result-main" id="result-main"></div>
+        <div class="result-type" id="result-type"></div>
+        <p class="instruction" id="instruction-text"></p>
+
+        <div class="prompt-card" id="prompt-card">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+
+        <button class="btn btn-primary" id="done-btn">I did it — Next Turn</button>
+      </div>
+
+      <button class="btn btn-secondary" id="btn-restart" style="margin-top:14px;">Restart Game</button>
+    </div>
+
+    <div class="footer">Dice and Die • Spin • Ask • Play fair</div>
+  </div>
+
+  <script>
+    // ========== PROMPTS ==========
+    const truths = [
+      "What's the most embarrassing thing you've ever done in public?",
+      "Who was your first crush and what did you like about them?",
+      "What's a secret you've never told anyone in this group?",
+      "What's the biggest lie you've ever told?",
+      "Have you ever pretended to like a gift you hated?",
+      "What's the weirdest dream you've ever had?",
+      "Who in this room would you trust with a big secret?",
+      "What's something you're surprisingly bad at?",
+      "Have you ever stalked someone on social media?",
+      "What's the most childish thing you still do?",
+      "What's your biggest fear that no one knows about?",
+      "Have you ever cheated on a test or game?",
+      "What's the most awkward date you've been on?",
+      "Who do you text the most when you're bored?",
+      "What's a habit of yours that annoys people?",
+      "Have you ever ghosted someone? Why?",
+      "What's the last thing you searched on your phone?",
+      "If you could swap lives with someone here for a day, who and why?",
+      "What's the most expensive thing you've broken?",
+      "Have you ever had a crush on a friend's partner?"
+    ];
+
+    const dares = [
+      "Do your best impression of someone in the room until someone guesses who.",
+      "Let the group look through your last 10 photos on your phone.",
+      "Speak in an accent of the group's choice for the next 3 turns.",
+      "Send a funny selfie to a contact the group chooses.",
+      "Dance for 30 seconds with no music.",
+      "Let someone draw on your face with a pen (washable if possible).",
+      "Call a friend and sing them 'Happy Birthday' even if it's not their birthday.",
+      "Do 15 push-ups or sit-ups right now.",
+      "Talk like a robot until your next turn.",
+      "Let the group post a status on your social media (they type it).",
+      "Wear your clothes inside-out for the next 10 minutes.",
+      "Eat a spoonful of a condiment the group picks (mustard, ketchup, etc.).",
+      "Do a dramatic reading of the last text message you sent.",
+      "Balance a book on your head and walk across the room.",
+      "Imitate a celebrity until someone guesses who it is.",
+      "Let the person to your right style your hair however they want for 5 minutes.",
+      "Speak only in questions until your next turn.",
+      "Do your best catwalk across the room.",
+      "Share the most recent voice note or video you have on your phone.",
+      "Give a 30-second motivational speech about why pizza is the best food."
+    ];
+
+    // ========== STATE ==========
+    let playerCount = 0;
+    let players = [];          // {name, color}
+    let currentSpinnerIndex = 0; // the person who is spinning (will receive the challenge)
+    let isSpinning = false;
+    let currentRotation = 0;
+    let lastAskerIndex = -1;
+    let lastType = null;
+
+    const colors = ['#ff6b6b', '#4ecdc4', '#ffd93d', '#a78bfa'];
+
+    // Segments will be: for each other player × Truth + Dare
+    let segments = []; // { label, askerIndex, type, color }
+
+    // ========== ELEMENTS ==========
+    const screenCount = document.getElementById('screen-count');
+    const screenNames = document.getElementById('screen-names');
+    const screenGame  = document.getElementById('screen-game');
+    const countBtns   = document.querySelectorAll('.count-btn');
+    const btnToNames  = document.getElementById('btn-to-names');
+    const nameInputs  = document.getElementById('name-inputs');
+    const btnStart    = document.getElementById('btn-start');
+    const btnBack     = document.getElementById('btn-back');
+    const playersBar  = document.getElementById('players-bar');
+    const wheel       = document.getElementById('wheel');
+    const spinBtn     = document.getElementById('spin-btn');
+    const resultArea  = document.getElementById('result-area');
+    const resultMain  = document.getElementById('result-main');
+    const resultType  = document.getElementById('result-type');
+    const instruction = document.getElementById('instruction-text');
+    const promptCard  = document.getElementById('prompt-card');
+    const promptText  = document.getElementById('prompt-text');
+    const doneBtn     = document.getElementById('done-btn');
+    const btnRestart  = document.getElementById('btn-restart');
+    const spinnerArea = document.getElementById('spinner-area');
+    const spinnerName = document.getElementById('spinner-name');
+
+    // ========== SCREEN 1 ==========
+    countBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        countBtns.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        playerCount = parseInt(btn.dataset.count);
+        btnToNames.disabled = false;
+      });
+    });
+
+    btnToNames.addEventListener('click', () => {
+      nameInputs.innerHTML = '';
+      for (let i = 0; i < playerCount; i++) {
+        const div = document.createElement('div');
+        div.className = 'name-field';
+        div.innerHTML = `
+          <div class="player-avatar c${i}">${i + 1}</div>
+          <input type="text" placeholder="Player ${i + 1} name" maxlength="12" data-index="${i}">
+        `;
+        nameInputs.appendChild(div);
+      }
+      showScreen(screenNames);
+    });
+
+    // ========== SCREEN 2 ==========
+    btnBack.addEventListener('click', () => showScreen(screenCount));
+
+    btnStart.addEventListener('click', () => {
+      const inputs = nameInputs.querySelectorAll('input');
+      players = [];
+      inputs.forEach((inp, i) => {
+        const name = inp.value.trim() || `Player ${i + 1}`;
+        players.push({ name, color: colors[i] });
+      });
+
+      currentSpinnerIndex = 0; // first player starts
+      buildPlayersBar();
+      rebuildSegments();
+      buildWheel();
+      updateSpinnerLabel();
+      resetRoundUI();
+      showScreen(screenGame);
+    });
+
+    // ========== BUILD SEGMENTS ==========
+    // Each segment = one possible "Asker + Type"
+    // We exclude the current spinner from being the asker
+    function rebuildSegments() {
+      segments = [];
+      players.forEach((p, i) => {
+        if (i === currentSpinnerIndex) return; // cannot ask yourself
+        // Truth segment
+        segments.push({
+          label: p.name,
+          sub: 'TRUTH',
+          askerIndex: i,
+          type: 'truth',
+          color: p.color
+        });
+        // Dare segment
+        segments.push({
+          label: p.name,
+          sub: 'DARE',
+          askerIndex: i,
+          type: 'dare',
+          color: p.color
+        });
+      });
+    }
+
+    function buildWheel() {
+      wheel.innerHTML = '';
+      const n = segments.length;
+      if (n === 0) return;
+
+      // Conic gradient
+      let gradient = 'conic-gradient(';
+      segments.forEach((seg, i) => {
+        const start = (i / n) * 100;
+        const end = ((i + 1) / n) * 100;
+        // slightly different shade for Truth vs Dare of same person
+        const col = seg.type === 'truth'
+          ? seg.color
+          : adjustColor(seg.color, -25);
+        gradient += `${col} ${start}% ${end}%${i < n - 1 ? ',' : ''}`;
+      });
+      gradient += ')';
+      wheel.style.background = gradient;
+
+      // Labels
+      const segmentAngle = 360 / n;
+      segments.forEach((seg, i) => {
+        const label = document.createElement('div');
+        label.style.cssText = `
+          position: absolute; width: 100%; height: 100%;
+          display: flex; align-items: center; justify-content: center;
+          transform: rotate(${(i + 0.5) * segmentAngle}deg);
+          pointer-events: none;
+        `;
+
+        const span = document.createElement('div');
+        span.style.cssText = `
+          transform: translateY(-105px);
+          text-align: center;
+          line-height: 1.15;
+        `;
+
+        const nameEl = document.createElement('div');
+        nameEl.textContent = seg.label;
+        nameEl.style.cssText = `
+          font-weight: 700;
+          font-size: ${n > 6 ? '0.72rem' : '0.85rem'};
+          color: ${isDark(seg.color) ? '#fff' : '#1a1a2e'};
+          text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+        `;
+
+        const typeEl = document.createElement('div');
+        typeEl.textContent = seg.sub;
+        typeEl.style.cssText = `
+          font-size: 0.65rem;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          opacity: 0.9;
+          color: ${isDark(seg.color) ? '#fff' : '#1a1a2e'};
+        `;
+
+        span.appendChild(nameEl);
+        span.appendChild(typeEl);
+        label.appendChild(span);
+        wheel.appendChild(label);
+      });
+    }
+
+    function adjustColor(hex, amount) {
+      // simple darken/lighten
+      let r = parseInt(hex.slice(1,3), 16);
+      let g = parseInt(hex.slice(3,5), 16);
+      let b = parseInt(hex.slice(5,7), 16);
+      r = Math.max(0, Math.min(255, r + amount));
+      g = Math.max(0, Math.min(255, g + amount));
+      b = Math.max(0, Math.min(255, b + amount));
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function isDark(hex) {
+      if (hex.startsWith('rgb')) return true; // approximate
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
+      return (r * 0.299 + g * 0.587 + b * 0.114) < 140;
+    }
+
+    function buildPlayersBar() {
+      playersBar.innerHTML = '';
+      players.forEach((p, i) => {
+        const chip = document.createElement('div');
+        chip.className = 'player-chip';
+        chip.id = `chip-${i}`;
+        chip.textContent = p.name;
+        chip.style.borderColor = p.color;
+        playersBar.appendChild(chip);
+      });
+    }
+
+    function updateSpinnerLabel() {
+      const p = players[currentSpinnerIndex];
+      spinnerName.textContent = p.name;
+      spinnerName.style.color = p.color;
+
+      // highlight chip
+      document.querySelectorAll('.player-chip').forEach(c => c.classList.remove('active'));
+      const chip = document.getElementById(`chip-${currentSpinnerIndex}`);
+      if (chip) chip.classList.add('active');
+    }
+
+    function resetRoundUI() {
+      isSpinning = false;
+      spinnerArea.style.display = 'block';
+      resultArea.classList.remove('show');
+      spinBtn.disabled = false;
+      currentRotation = currentRotation % 360; // keep some continuity
+    }
+
+    // ========== SPIN ==========
+    spinBtn.addEventListener('click', () => {
+      if (isSpinning || segments.length === 0) return;
+      isSpinning = true;
+      spinBtn.disabled = true;
+
+      const n = segments.length;
+      const index = Math.floor(Math.random() * n); // which segment we land on
+      lastAskerIndex = segments[index].askerIndex;
+      lastType = segments[index].type;
+
+      const segmentAngle = 360 / n;
+      // We want the middle of the chosen segment under the top pointer
+      const targetAngle = 360 - (index * segmentAngle + segmentAngle / 2);
+      const extraSpins = 5 + Math.floor(Math.random() * 3);
+      const finalRotation = currentRotation + extraSpins * 360 + targetAngle - (currentRotation % 360);
+
+      currentRotation = finalRotation;
+      wheel.style.transform = `rotate(${finalRotation}deg)`;
+
+      setTimeout(() => {
+        isSpinning = false;
+        showResult(index);
+      }, 4400);
+    });
+
+    function showResult(segIndex) {
+      const seg = segments[segIndex];
+      const asker = players[seg.askerIndex];
+      const victim = players[currentSpinnerIndex];
+
+      resultMain.innerHTML = `<span style="color:${asker.color}">${asker.name}</span> asks<br><span style="color:${victim.color}">${victim.name}</span>`;
+
+      resultType.textContent = seg.type.toUpperCase();
+      resultType.className = 'result-type ' + seg.type;
+
+      instruction.textContent = `${asker.name} must give a ${seg.type} to ${victim.name}`;
+
+      // Random prompt
+      const list = seg.type === 'truth' ? truths : dares;
+      const prompt = list[Math.floor(Math.random() * list.length)];
+      promptText.textContent = prompt;
+
+      spinnerArea.style.display = 'none';
+      resultArea.classList.add('show');
+    }
+
+    // ========== NEXT TURN ==========
+    // After the victim finishes → the Asker becomes the new spinner (victim)
+    doneBtn.addEventListener('click', () => {
+      // Pass the spin to the person who just asked
+      currentSpinnerIndex = lastAskerIndex;
+
+      rebuildSegments(); // because the excluded person changed
+      buildWheel();
+      updateSpinnerLabel();
+      resetRoundUI();
+    });
+
+    btnRestart.addEventListener('click', () => {
+      players = [];
+      playerCount = 0;
+      currentSpinnerIndex = 0;
+      currentRotation = 0;
+      wheel.style.transform = 'rotate(0deg)';
+      countBtns.forEach(b => b.classList.remove('selected'));
+      btnToNames.disabled = true;
+      showScreen(screenCount);
+    });
+
+    // ========== HELPERS ==========
+    function showScreen(screen) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      screen.classList.add('active');
+    }
+  </script>
+</body>
+</html>
