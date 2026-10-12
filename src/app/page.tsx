@@ -17,7 +17,7 @@ function BackgroundPattern() {
   return (
     <svg
       aria-hidden
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.07]"
+      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.035]"
     >
       <defs>
         <pattern
